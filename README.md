@@ -7,6 +7,8 @@ This repository contains my practical cybersecurity labs from:
 
 - TryHackMe
 - LetsDefend
+- Personal Investigations
+
 
 ## Categories
 
@@ -16,6 +18,11 @@ This repository contains my practical cybersecurity labs from:
 - Incident Response
 - SIEM
 - Digital Forensics
+- Network Traffic monitoring
+- Netowrk Security
+- Web Security Monitoring
+- Windows Security Monitoring
+- Linux Security Monitoring 
 
 Each lab contains:
 
