@@ -35,25 +35,14 @@ Every case follows the same four-part format:
 
 ## Case Index
 
-### 🔴 Critical
+Each severity folder maintains its own case index. Click through for the full list of investigations at that level:
 
-| # | Title | Verdict | Tactic (MITRE) | Date | Link |
-|---|---|---|---|---|---|
-| 001 | Phishing Attempt with Spoofed Domain (invoice_feb.pdf.exe) | True Positive | TA0001 – Initial Access (T1566) | 09/07/2026 | [critical/001-phishing-spoofed-domain-trusted-bank.md](critical/001-phishing-spoofed-domain-trusted-bank.md) |
-
-### 🟠 Advanced
-
-_No cases yet._
-
-### 🟡 Medium
-
-| # | Title | Verdict | Tactic (MITRE) | Date | Link |
-|---|---|---|---|---|---|
-| 002 | False Positive: Unusual Login Pattern (bsmith) | False Positive (with escalation note) | TA0005 – Defense Evasion (T1110) | 10/07/2026 | [medium/002-false-positive-login-bsmith-escalated-ip.md](medium/002-false-positive-login-bsmith-escalated-ip.md) |
-
-### 🟢 Low
-
-_No cases yet._
+| Severity | Cases | Index |
+|---|---|---|
+| 🔴 Critical | 1 | [critical/README.md](critical/README.md) |
+| 🟠 Advanced | 0 | [advanced/README.md](advanced/README.md) |
+| 🟡 Medium | 1 | [medium/README.md](medium/README.md) |
+| 🟢 Low | 0 | [low/README.md](low/README.md) |
 
 ---
 
