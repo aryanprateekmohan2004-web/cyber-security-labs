@@ -13,10 +13,10 @@ Cases are organized by severity into their own directories. Each investigation i
 
 ```
 Personal_investigations/
-├── critical/
-├── advanced/
-├── medium/
-├── low/
+├── Critical/
+├── High/
+├── Medium/
+├── Low/
 └── README.md   ← you are here
 ```
 
@@ -39,10 +39,10 @@ Each severity folder maintains its own case index. Click through for the full li
 
 | Severity | Cases | Index |
 |---|---|---|
-| 🔴 Critical | 1 | [critical/README.md](critical/README.md) |
-| 🟠 Advanced | 0 | [advanced/README.md](advanced/README.md) |
-| 🟡 Medium | 1 | [medium/README.md](medium/README.md) |
-| 🟢 Low | 0 | [low/README.md](low/README.md) |
+| 🔴 Critical | 1 | [Critical/README.md](Critical/README.md) |
+| 🟠 Advanced | 0 | [High/README.md](High/README.md) |
+| 🟡 Medium | 1 | [Medium/README.md](Medium/README.md) |
+| 🟢 Low | 0 | [Low/README.md](Low/README.md) |
 
 ---
 
