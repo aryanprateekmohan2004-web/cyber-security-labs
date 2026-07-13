@@ -40,7 +40,7 @@ Each severity folder maintains its own case index. Click through for the full li
 | Severity | Cases | Index |
 |---|---|---|
 | 🔴 Critical | 1 | [Critical/README.md](Critical/README.md) |
-| 🟠 Advanced | 0 | [High/README.md](High/README.md) |
+| 🟠 High | 1 | [High/README.md](High/README.md) |
 | 🟡 Medium | 1 | [Medium/README.md](Medium/README.md) |
 | 🟢 Low | 0 | [Low/README.md](Low/README.md) |
 
